@@ -1,0 +1,37 @@
+name: reconcile-portfolio
+
+on:
+  schedule:
+    - cron: "0 6 * * 1-5"
+  workflow_dispatch:
+
+jobs:
+  reconcile:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install package
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install .
+
+      - name: Run reconciliation sync
+        env:
+          PERSONAL_NOTION_TOKEN: ${{ secrets.PERSONAL_NOTION_TOKEN }}
+          PERSONAL_NOTION_INBOX_DATABASE_ID: ${{ secrets.PERSONAL_NOTION_INBOX_DATABASE_ID }}
+          PERSONAL_NOTION_PUBLISH_QUEUE_DATABASE_ID: ${{ secrets.PERSONAL_NOTION_PUBLISH_QUEUE_DATABASE_ID }}
+          PERSONAL_NOTION_PORTFOLIO_DATABASE_ID: ${{ secrets.PERSONAL_NOTION_PORTFOLIO_DATABASE_ID }}
+          PERSONAL_NOTION_TARGET_PAGE_IDS: ${{ secrets.PERSONAL_NOTION_TARGET_PAGE_IDS }}
+          PERSONAL_NOTION_RECONCILIATION_DATABASE_ID: ${{ secrets.PERSONAL_NOTION_RECONCILIATION_DATABASE_ID }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          RECONCILIATION_MAX_CONTEXT_CHARS: "2500"
+        run: portfolio-ops reconcile sync --mode approved
